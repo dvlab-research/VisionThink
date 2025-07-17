@@ -24,7 +24,7 @@
 ## News
 
 - [x] [2025.07.18] We release [Paper](files/VisionThink-Arxiv.pdf) and this GitHub repo.
-- [x] [2025.07.17] All data and model can be found at [here](https://huggingface.co/collections/Senqiao/visionthink-6878d839fae02a079c9c7bfe).
+- [x] [2025.07.17] All data and models can be found [here](https://huggingface.co/collections/Senqiao/visionthink-6878d839fae02a079c9c7bfe).
 
 **VisionThink: Smart and Efficient Vision Language Model via Reinforcement Learning [[Paper](files/VisionThink-Arxiv.pdf)]** <br />
 [Senqiao Yang](https://scholar.google.com/citations?user=NcJc-RwAAAAJ),
@@ -46,7 +46,7 @@
 3. VisionThink achieves strong performance and efficiency by simply resizing input images to reduce visual tokens. We hope this inspires further research into **Efficient Reasoning  Vision Language Models**.
 
 ## Video
-<p align="center" width="80%">
+<p align="center" width="85%">
   <a href="https://youtu.be/RCRwV10Loc4" target="_blank">
     <img src="files/Video.png" alt="Stanford-Alpaca" style="width: 70%; min-width: 300px; display: block; margin: auto;">
   </a>
@@ -56,7 +56,7 @@
 
 ## Installation
 
-The environment is follow the [Verl](https://github.com/volcengine/verl).
+The environment follows the [Verl](https://github.com/volcengine/verl).
 ```
 git clone https://github.com/dvlab-research/VisionThink.git
 conda create -n visionthink python=3.11 -y
@@ -66,7 +66,7 @@ pip3 install -e .
 # flash-attn
 pip3 install flash-attn --no-build-isolation
 ```
-If you want to use the Qwen3 as Judge Model.
+If you want to use the Qwen3 as the Judge Model.
 ```
 pip install -U tensordict
 pip install transformers==4.51.0
