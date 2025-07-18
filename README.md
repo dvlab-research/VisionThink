@@ -1,12 +1,12 @@
 <p align="center" width="100%">
-<img src="files/VisionThink.jpg" alt="Stanford-Alpaca" style="width: 100%; min-width: 300px; display: block; margin: auto;">
+<img src="https://raw.githubusercontent.com/dvlab-research/VisionThink/main/files/VisionThink.jpg" alt="Stanford-Alpaca" style="width: 100%; min-width: 300px; display: block; margin: auto;">
 </p>
 
 # VisionThink: Smart and Efficient Vision Language Model via Reinforcement Learning
 
 
-[![Paper](https://img.shields.io/badge/Paper-Arxiv%20Link-light)](files/VisionThink-Arxiv.pdf)
-[![HF](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Discussion-orange)](https://huggingface.co/papers/2412.04467)
+[![Paper](https://img.shields.io/badge/Paper-Arxiv%20Link-light)](https://arxiv.org/abs/2507.13348)
+[![HF](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Discussion-orange)](https://huggingface.co/papers/2507.13348)
 [![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-yellow.svg)](https://github.com/dvlab-research/VisionThink/blob/main/LICENSE)
 <a href='https://huggingface.co/collections/Senqiao/visionthink-6878d839fae02a079c9c7bfe'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Data%20Model-Collection-red'></a>
 
@@ -23,10 +23,10 @@
       
 ## News
 
-- [x] [2025.07.18] We release [Paper](files/VisionThink-Arxiv.pdf) and this GitHub repo.
+- [x] [2025.07.18] We release [Paper](https://arxiv.org/abs/2507.13348) and this GitHub repo.
 - [x] [2025.07.17] All data and models can be found [here](https://huggingface.co/collections/Senqiao/visionthink-6878d839fae02a079c9c7bfe).
 
-**VisionThink: Smart and Efficient Vision Language Model via Reinforcement Learning [[Paper](files/VisionThink-Arxiv.pdf)]** <br />
+**VisionThink: Smart and Efficient Vision Language Model via Reinforcement Learning [[Paper](https://arxiv.org/abs/2507.13348)]** <br />
 [Senqiao Yang](https://scholar.google.com/citations?user=NcJc-RwAAAAJ),
 [Junyi Li](https://scholar.google.com/citations?hl=zh-CN&user=zQ0P3JAAAAAJ),
 [Xin Lai](https://scholar.google.com/citations?user=tqNDPA4AAAAJ),
@@ -36,7 +36,7 @@
 
 ## Highlights
 <p align="center" width="80%">
-<img src="files/Framework.jpg" alt="Stanford-Alpaca" style="width: 80%; min-width: 300px; display: block; margin: auto;">
+<img src="https://raw.githubusercontent.com/dvlab-research/VisionThink/main/files/Framework.jpg" alt="Stanford-Alpaca" style="width: 80%; min-width: 300px; display: block; margin: auto;">
 </p>
 
 1. Our VisionThink leverages reinforcement learning to **autonomously** learn whether to reduce visual tokens. Compared to traditional efficient VLM approaches, our method achieves significant improvements on **fine-grained** benchmarks, such as those involving OCR-related tasks.
@@ -47,8 +47,8 @@
 
 ## Video
 <p align="center" width="85%">
-  <a href="https://youtu.be/RCRwV10Loc4" target="_blank">
-    <img src="files/Video.png" alt="Stanford-Alpaca" style="width: 70%; min-width: 300px; display: block; margin: auto;">
+  <a href="https://www.youtube.com/watch?v=DGjbFbA5mBw" target="_blank">
+    <img src="https://raw.githubusercontent.com/dvlab-research/VisionThink/main/files/Video.png" alt="Stanford-Alpaca" style="width: 70%; min-width: 300px; display: block; margin: auto;">
   </a>
 </p>
 
