@@ -147,12 +147,28 @@ CUDA_VISIBLE_DEVICES="0,1,2,3" python3 -m lmms_eval \
     --output_path ./lmms_eval_logs/${MODEL_NAME} \
     --verbosity DEBUG
 ```
+
 ## Citation
+
 If you find this project useful in your research, please consider citing:
 
-```
+> This work is highly motivated by our previous effort on efficient VLMs, [**VisionZip**](https://github.com/dvlab-research/VisionZip), which explores token compression for faster inference. 
 
 ```
+@article{yang2025visionthink,
+  title={VisionThink: Smart and Efficient Vision Language Model via Reinforcement Learning},
+  author={Yang, Senqiao and Li, Junyi and Lai, Xin and Yu, Bei and Zhao, Hengshuang and Jia, Jiaya},
+  journal={arXiv preprint arXiv:2507.13348},
+  year={2025}
+}
+@article{yang2024visionzip,
+  title={VisionZip: Longer is Better but Not Necessary in Vision Language Models},
+  author={Yang, Senqiao and Chen, Yukang and Tian, Zhuotao and Wang, Chengyao and Li, Jingyao and Yu, Bei and Jia, Jiaya},
+  journal={arXiv preprint arXiv:2412.04467},
+  year={2024}
+}
+```
+
 
 
 ## Acknowledgement
