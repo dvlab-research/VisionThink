@@ -135,7 +135,6 @@ class NaiveMultiThreadsRewardManager:
                 print("[response]", response_str)
                 print("[ground_truth]", ground_truth)
                 print("[score]", (score, acc_score, format_score))
-                # import pdb; pdb.set_trace()
             
             time_consume_list.append(time_consume)
 

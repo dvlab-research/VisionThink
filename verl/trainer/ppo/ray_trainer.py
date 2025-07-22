@@ -540,7 +540,7 @@ class RayPPOTrainer(object):
                 mask_blank=self.config.data.mask_blank,
                 use_3drope=self.config.trainer.use_3drope,
                 prompt_type=self.config.data.prompt_type,
-                general_qa_reward_fn=self.config.data.get("general_qa_reward_fn", "v1"),
+                general_qa_reward_fn=self.config.data.get("general_qa_reward_fn", "general_qa_gpt"),
                 tool_call=self.config.data.tool_call,
                 use_tgt_size=self.config.data.use_tgt_size,
                 use_raw_image=self.config.actor_rollout_ref.rollout.use_raw_image,
@@ -615,18 +615,12 @@ class RayPPOTrainer(object):
                                             system_prompt=system_prompt,)
             self.val_dataloader = StatefulDataLoader(
                 dataset=self.val_dataset,
-                # Validation datasets are sent to inference engines as a whole batch,
-                # which will schedule the memory themselves.
-                # batch_size=len(self.val_dataset),
                 batch_size=512,
                 num_workers=8,
                 shuffle=False,
                 drop_last=True,
                 collate_fn=collate_fn)
             
-            # assert len(
-            #     self.val_dataloader
-            # ) == 1, "Validation dataloader must have a single batch, which inference engines will schedule the memory themselves."
 
         # inject total_training_steps to actor/critic optim_config. This is hacky.
         total_training_steps = len(self.train_dataloader) * self.config.trainer.total_epochs
@@ -645,7 +639,7 @@ class RayPPOTrainer(object):
     def _maybe_log_train_generations_to_wandb(self, batch, reward_tensor):
         """Log a table of train samples to wandb"""
         generations_to_log = self.config.trainer.train_generations_to_log_to_wandb
-        # assert generations_to_log < len(batch), "Training Rollouts log to wandb should be smaller than the input size."
+
         
         if generations_to_log == 0:
             return
@@ -660,9 +654,11 @@ class RayPPOTrainer(object):
         outputs = self.tokenizer.batch_decode(response_ids, skip_special_tokens=True)
         ground_truth = batch.non_tensor_batch['ground_truth'].tolist()[:generations_to_log]
         scores = reward_tensor.max(dim=-1)[0][:generations_to_log]
+
         # Create tuples of (input, output, score) and sort by input text
         samples = list(zip(doc_ids, inputs, outputs, ground_truth, scores))
         samples.sort(key=lambda x: str(x[0]))  # Sort by input text
+
         # Use fixed random seed for deterministic shuffling
         rng = np.random.RandomState(42)
         rng.shuffle(samples)
@@ -671,8 +667,7 @@ class RayPPOTrainer(object):
         if not hasattr(self, 'train_table'):
             # Initialize the table on first call
             self.train_table = wandb.Table(columns=columns)
-        # Create a new table with same columns and existing data
-        # Workaround for https://github.com/wandb/wandb/issues/2981#issuecomment-1997445737
+
         new_table = wandb.Table(columns=columns, data=self.train_table.data)
         # Add new row with all data
         row_data = []
@@ -752,17 +747,18 @@ class RayPPOTrainer(object):
             apply_tool_call_list.append(apply_tool_call)
             success_tool_call_list.append(success_tool_call)
         use_tool_correct_answer_num = (accuracy_scores[success_tool_call_list] == 1).sum().item()
-        if batch.meta_info.get('validate', False):  # val
+        if batch.meta_info.get('validate', False):  # Validation
             metrics['val/tool_call/success_tool_call_ratio_per_batch'] = sum(success_tool_call_list) / len(success_tool_call_list)
             metrics['val/tool_call/success_tool_call_rate'] = sum(success_tool_call_list) / (sum(apply_tool_call_list) + 1e-4)
             metrics['val/tool_call/success_tool_call_correct_answer_ratio'] = use_tool_correct_answer_num / (sum(success_tool_call_list) + 1e-4)
-        else:   # train
+        else:   # Train
             num_rollouts = self.config.actor_rollout_ref.rollout.n
             sample_level_success_tool_call_list = [True if any(success_tool_call_list[i : i + num_rollouts]) else False for i in range(0, len(success_tool_call_list), num_rollouts)] 
             metrics['tool_call/effective_batch_success_tool_call_ratio'] = sum(success_tool_call_list) / len(success_tool_call_list)
             metrics['tool_call/effective_sample_success_tool_call_ratio'] = sum(sample_level_success_tool_call_list) / len(sample_level_success_tool_call_list)
             metrics['tool_call/success_tool_call_rate'] = sum(success_tool_call_list) / (sum(apply_tool_call_list) + 1e-4)
             metrics['tool_call/success_tool_call_correct_answer_ratio'] = use_tool_correct_answer_num / (sum(success_tool_call_list) + 1e-4)
+
             # log different scores combination ratio
             group_accuracy_reward_tensor = accuracy_scores.view(-1, num_rollouts)
             num_samples = group_accuracy_reward_tensor.shape[0]
@@ -770,10 +766,12 @@ class RayPPOTrainer(object):
             use_tool_correct_count = ((group_accuracy_reward_tensor == self.config.data.acc_reward_weight) & group_success_tool_call_mask).sum(dim=1)  # (bs,)
             direct_answer_correct_count = ((group_accuracy_reward_tensor == self.config.data.acc_reward_weight) & (~group_success_tool_call_mask)).sum(dim=1)  # (bs,)
             wrong_answer_count = (group_accuracy_reward_tensor == 0).sum(dim=1) # (bs,)
+
             # Obtain mask
             use_tool_correct_mask = use_tool_correct_count > 0
             direct_answer_correct_mask = direct_answer_correct_count > 0
             wrong_answer_mask = wrong_answer_count > 0
+
             # Due to rejection sample, here we will not encounter all_correct | all_wrong cases
             wrong_answer_use_tool_correct_num = (use_tool_correct_mask & wrong_answer_mask & (~direct_answer_correct_mask)).sum().item()  # [0, 1 - penalty]
             wrong_answer_direct_answer_correct_num = (direct_answer_correct_mask & wrong_answer_mask & (~use_tool_correct_mask)).sum().item()  # [0, 1]
@@ -783,6 +781,7 @@ class RayPPOTrainer(object):
             metrics['tool_call/wrong_answer_direct_answer_correct_ratio'] = wrong_answer_direct_answer_correct_num / num_samples
             metrics['tool_call/use_tool_correct_direct_answer_correct_ratio'] = use_tool_correct_direct_answer_correct_num / num_samples
             metrics['tool_call/wrong_answer_use_tool_correct_direct_answer_correct_ratio'] = wrong_answer_use_tool_correct_direct_answer_correct_num / num_samples
+
         return metrics
 
     def _validate(self):
@@ -1208,11 +1207,10 @@ class RayPPOTrainer(object):
                         # We first compute the scores using reward model. Then, we call reward_fn to combine
                         # the results from reward model and rule-based results.
                         if self.use_rm:
-                            # we first compute reward model score
+                            # Compute reward model score
                             reward_score_proto = self.rm_wg.compute_rm_score(new_batch)
                             new_batch = new_batch.union(reward_score_proto)
 
-                        # we combine with rule-based rm
                         reward_tensor, acc_reward_tensor, format_reward_tensor, invalid_uids = self.reward_fn(new_batch)
                         if self.config.trainer.soft_tool_call_penalty_ratio > 0:
                             assert self.config.data.tool_call_penalty > 0, f"Soft tool call penalty was triggered, but found tool_call_penalty is 0."
@@ -1224,14 +1222,16 @@ class RayPPOTrainer(object):
                             correct_item_num = correct_item_mask.sum(dim=1)
                             correct_direct_answer_num = correct_direct_answer.sum(dim=1)
                             ratio = correct_direct_answer_num.float() / (correct_item_num.float() + 1e-4)   # Add 1e-4 to avoid zero-division
+
+                            # Penalty
                             penalty_tensor_mask = (ratio < self.config.trainer.soft_tool_call_penalty_ratio) & (ratio > 0)
                             if self.config.trainer.soft_tool_call_filter:
                                 all_correct_mask = (penalized_accuracy_tensor_.max(dim=-1)[0] != 0).all(dim=1)  # (bs,)，
                                 any_wrong_mask = (penalized_accuracy_tensor_.max(dim=-1)[0] == 0).any(dim=1) # (bs,)，
                                 penalty_tensor_mask = (penalty_tensor_mask & all_correct_mask) | any_wrong_mask  # (bs,)
                             penalty_tensor_mask_expand = penalty_tensor_mask[:, None, None]  # (bs, 1, 1)
-                            correct_tool_call_item_mask = penalized_accuracy_tensor_ == (self.config.data.acc_reward_weight - self.config.data.tool_call_penalty)  # (bs, n, max_response_length)
                             correct_direct_answer_item_mask = penalized_accuracy_tensor_ == self.config.data.acc_reward_weight
+
                             # Direct Answer Penalty
                             if self.config.data.direct_answer_penalty > 0:
                                 modify_penalty_direct_answer_item_mask = penalty_tensor_mask_expand & correct_direct_answer_item_mask
@@ -1292,16 +1292,6 @@ class RayPPOTrainer(object):
                             new_batch = new_batch[valid_mask]
                             new_batch = dataprotoitem_to_dataproto(new_batch)
 
-                            # # Round down to the nearest multiple of world size
-                            # num_trainer_replicas = self.actor_rollout_wg.world_size 
-                            # max_batch_size = (new_batch.batch['input_ids'].shape[0] // num_trainer_replicas) * num_trainer_replicas
-                            # if not max_batch_size:
-                            #     # give up, you got everything either all wrong or right.
-                            #     continue
-                            # size_mask = torch.zeros(new_batch.batch['input_ids'].shape[0], dtype=torch.bool)
-                            # size_mask[:max_batch_size] = True
-                            # new_batch = new_batch[size_mask]
-                            # new_batch = dataprotoitem_to_dataproto(new_batch)
                             assert new_batch.batch['input_ids'].shape[0] % self.config.actor_rollout_ref.rollout.n == 0
                             num_prompt_in_batch += new_batch.batch['input_ids'].shape[0] // self.config.actor_rollout_ref.rollout.n
 

@@ -51,8 +51,6 @@ class GPT4VisionClient:
 
         messages[-1]["content"].append({"type": "text", "text": prompt})
 
-        # import pdb; pdb.set_trace()
-
         attempt = 0
         while attempt < max_retries:
             try:
@@ -65,9 +63,6 @@ class GPT4VisionClient:
                 )
 
                 if "1" not in response.choices[0].message.content and '0' not in response.choices[0].message.content:
-                    # print("Warning: there is no '0' nor '1' in the response: {}".format(
-                    #     response.choices[0].message.content
-                    # ))
                     raise ValueError("No '0' nor '1' in the response: {}".format(response.choices[0].message.content))
                 return response.choices[0].message.content
             except openai.RateLimitError as e:
@@ -79,9 +74,6 @@ class GPT4VisionClient:
                 print(str(e))
                 print("messages: ", messages)
                 print("="*100)
-                # delay = initial_delay * (2**attempt) + random.uniform(
-                #     0, 0.1 * initial_delay * (2**attempt)
-                # )
                 delay = 1
                 time.sleep(delay)
             attempt += 1
@@ -110,15 +102,6 @@ def inner_acc_reward(prompt:str, predict_str: str, original_answer: str, use_gpt
 
     question = prompt
 
-    # print("="*100)
-    # print("use_gpt: {}, gpt_extract_answer: {}".format(use_gpt, gpt_extract_answer))
-    # print("question: {}".format(question))
-    # print("original_answer: {}".format(original_answer))
-    # print("prediction: {}".format(original_predict_str))
-    # print("="*100)
-
-    # import pdb; pdb.set_trace()
-
     prompt = QUERY_PROMPT.format(question=question, ground_truth=original_answer, prediction=original_predict_str)
     response = client.query(images=[], prompt=prompt, system_prompt=SYSTEM_PROMPT)
     if len(response) == 0:
@@ -144,14 +127,9 @@ def compute_score(prompt: str, predict_str: str, ground_truth: list, extra_info:
     
     format = format_reward(predict_str, extra_info)
 
-    # print(f"acc_reward_weight: {acc_reward_weight}, format_reward_weight: {format_reward_weight}")
     acc_score = acc_reward_weight * acc
     format_score = format_reward_weight * format
     score = acc_score + format_score
-
-    # print(f"score: {score}, acc_score: {acc_score}, format_score: {format_score}")
-
-    # print("="*100 + "\n" + "prompt: " + prompt + "\n" + "predict_str: " + predict_str + "\n" + "ground_truth: " + ground_truth + "\n" + "score: " + str(score) + "\n" + "acc_score: " + str(acc_score) + "\n" + "format_score: " + str(format_score) + "\n" + "="*100)
 
     return score, acc_score, format_score
 

@@ -26,7 +26,7 @@ data:
   strict_tool_call_penalty: False
   extract_answer_tags: split
   prompt_type: "vanilla"
-  general_qa_reward_fn: "v1"
+  general_qa_reward_fn: "general_qa_gpt"
   val_general_qa_reward_fn: null
   gpt_extract_answer: False
   gpt_threads: 100

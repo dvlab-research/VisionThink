@@ -23,7 +23,7 @@ import json
 import math
 import random
 
-import bytedtos
+
 import io
 import torch
 import numpy as np
@@ -82,49 +82,12 @@ def collate_fn(data_list: list[dict]) -> dict:
 
     return {**tensors, **non_tensors}
 
-def get_tos_client(ak=None, bucket_name=None, tos_idc=None):
-    if ak is None:
-        ak = os.getenv('TOS_AK', 'D05VZ7IA3E3LYJW6VUUV')
-    if bucket_name is None:
-        bucket_name = os.getenv('TOS_BUCKET_NAME', 'tiktok-maas-us')
-    if tos_idc is None:
-        tos_idc = os.getenv('TOS_IDC', 'maliva')
-    tos_psm = 'toutiao.tos.tosapi'
-    tos_cluster = 'default'
-    cli = bytedtos.Client(
-        bucket_name,
-        ak,
-        service=tos_psm,
-        cluster=tos_cluster,
-        idc=tos_idc,
-        timeout=60,
-        connect_timeout=10,
-        connection_pool_size=16,
-    )
-    return cli
+
 
 def process_image(image: dict, max_pixels: int = 2048 * 2048, min_pixels: int = 512 * 512, tool_call=False, use_tgt_size=False, tgt_w=None, tgt_h=None, use_tool=False):
     # from io import BytesIO
     from PIL import Image
     
-    # if isinstance(image, dict):
-    #     image = Image.open(BytesIO(image['bytes']))
-    # elif isinstance(image, np.ndarray):
-    #     image = Image.fromarray(image).convert('RGB')
-    # elif isinstance(image, str) and os.path.exists(image):
-    #     try:
-    #         image = Image.open(image).convert('RGB')
-    #     except Exception as exn:
-    #         print(f"Failed to open image {image}. Exception:", exn)
-    #         raise exn
-    # else:
-    #     try:
-    #         image_data = tos_cli.get_object(image).data
-    #         image = Image.open(io.BytesIO(image_data)).convert('RGB')
-    #     except Exception as exn:
-    #         print(f"Failed to open image {image}. Exception:", exn)
-    #         raise exn
-
     if tgt_w and tgt_h:     
         image = image.resize((tgt_w, tgt_h), resample=Image.Resampling.LANCZOS)
         if use_tool and not use_tgt_size:      # Double the resolution of the image if the base model cannot handle this problem based on the current resolution
@@ -182,7 +145,7 @@ class MultiModalDataset(Dataset):
                  mask_blank: bool = False,
                  use_3drope: bool = True,
                  prompt_type: str = "vanilla",
-                 general_qa_reward_fn: str = 'v1',
+                 general_qa_reward_fn: str = 'general_qa_gpt',
                  tool_call: bool = False,
                  use_tgt_size: bool = False,
                  use_raw_image: bool = False,
@@ -215,26 +178,10 @@ class MultiModalDataset(Dataset):
         self.use_tgt_size = use_tgt_size
         self.use_raw_image = use_raw_image
 
-        print("self.use_3drope: ", self.use_3drope)
-        print("self.prompt_type: ", self.prompt_type)
-        print("self.general_qa_reward_fn: ", self.general_qa_reward_fn)
-        print("self.tool_call:", self.tool_call)
-        print("self.use_tgt_size:", self.use_tgt_size)
-        print("self.use_raw_image:", self.use_raw_image)
-
-        # whether to store the dataset in state_dict()
-        # default not store
         self.serialize_dataset = False
-        # self._download()
         self._read_files_and_tokenize()
 
-        # self.tos_cli = get_tos_client()
 
-    def _download(self, use_origin_parquet=False):
-        from verl.utils.fs import copy_to_local
-        parquet_files = self.parquet_files if not use_origin_parquet else self.original_parquet_files
-        for i, parquet_file in enumerate(parquet_files):
-            self.parquet_files[i] = copy_to_local(src=parquet_file, cache_dir=self.cache_dir)
 
     def _read_files_and_tokenize(self):
 
@@ -281,11 +228,7 @@ class MultiModalDataset(Dataset):
         row_dict: dict = copy.deepcopy(self.list_data_dict[item])
 
         chat = row_dict.pop(self.prompt_key)
-        # if isinstance(chat, list) and self.system_prompt:
-        #     chat.insert(0, {"role": "system", "content": self.system_prompt})
-        #     chat = np.array(chat)
-        # elif isinstance(chat, np.ndarray) and self.system_prompt:
-        #     chat = np.insert(chat, 0, {"content": self.system_prompt, "role": "system"})
+
 
         prompt_with_chat_template = self.tokenizer.apply_chat_template(chat, add_generation_prompt=True, tokenize=False)
 
@@ -304,7 +247,7 @@ class MultiModalDataset(Dataset):
                 return self.__getitem__(item+1) if item + 1 < len(self) else self.__getitem__(0)
             image_inputs = self.processor.image_processor(row_dict['multi_modal_data']['image'], return_tensors='pt')
             image_grid_thw = image_inputs['image_grid_thw']
-            # row_dict['multi_modal_inputs'] = {key: val for key, val in image_inputs.items()}
+            
 
             if image_grid_thw is not None:
                 merge_length = self.processor.image_processor.merge_size**2
@@ -369,23 +312,8 @@ class MultiModalDataset(Dataset):
 
         ### Add for CustomRewardManager ###
 
-        if self.general_qa_reward_fn == "v3":
 
-            # print("e2 self.general_qa_reward_fn: ", self.general_qa_reward_fn)
-
-            row_dict['ground_truth'] = row_dict.pop('reformat_answers')
-            for key in ['solution', 'original_answer', 'response']:
-                if key in row_dict:
-                    row_dict.pop(key)
-        elif self.general_qa_reward_fn == "v4":
-
-            # print("e4 self.general_qa_reward_fn: ", self.general_qa_reward_fn)
-
-            row_dict['ground_truth'] = row_dict.pop('reformat_answers') + [row_dict.pop('original_answer'),]
-            for key in ['solution', 'response']:
-                if key in row_dict:
-                    row_dict.pop(key)
-        elif self.general_qa_reward_fn in ["v5", "general_qa_tool", "general_qa_simple_resize", "general_qa_simple_think_resize", "general_qa_verifier", "general_qa_verifier_tool"]:
+        if self.general_qa_reward_fn in ["general_qa_gpt", "general_qa_tool", "general_qa_verifier"]:
 
             row_dict['ground_truth'] = row_dict.pop('original_answer')
             for key in ['solution', 'reformat_answers', 'response']:
@@ -423,7 +351,7 @@ if __name__ == '__main__':
     processor = hf_processor(local_path, use_fast=True)  # used for multimodal LLM, could be none
     SYSTEM_PROMPT="You FIRST think about the reasoning process step by step as an internal monologue and then provide the final answer. The reasoning process MUST BE enclosed within <think> </think> tags. The final answer MUST BE put in <answer> </answer> tags."
     dataset = MultiModalDataset(
-        data_path="generalqa_filtered_ttv13_ori_use_tool_v1.yaml",
+        data_path="generalqa.yaml",
         tokenizer=tokenizer,
         processor=processor,
         prompt_key='prompt',

@@ -14,7 +14,6 @@
 
 from verl import DataProto
 from verl.utils.reward_score import _default_compute_score
-# from verl.utils.reward_score.openr1 import format_reward, acc_reward
 import torch
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
@@ -89,8 +88,6 @@ class VerifierRewardManager:
         extra_info = data_item.non_tensor_batch.get('extra_info', None)
         extra_info = self.extra_info.update(extra_info) if extra_info else self.extra_info
 
-        # print("extra_info: ", extra_info)
-        # question = data_item.non_tensor_batch['raw_prompt']
         accuracy_score = data_item.batch['rm_scores'].max().item()
         result = self.compute_score(
             data_source=data_source,

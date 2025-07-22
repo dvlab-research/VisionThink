@@ -98,6 +98,7 @@ def main_task(config, compute_score=None):
             from verl.workers.megatron_workers import RewardModelWorker
         elif config.reward_model.strategy == 'verifier':
             from verl.workers.reward_model.verifier import RewardModelWorker
+            # For Qwen3 Judge
         else:
             raise NotImplementedError
         role_worker_mapping[Role.RewardModel] = ray.remote(RewardModelWorker)
@@ -113,19 +114,9 @@ def main_task(config, compute_score=None):
     elif reward_manager_name == 'naive_multithreads_tool':
         from verl.workers.reward_manager import NaiveMultiThreadsToolRewardManager
         reward_manager_cls = NaiveMultiThreadsToolRewardManager
-    elif reward_manager_name == 'naive_multithreads_v2':
-        from verl.workers.reward_manager import NaiveMultiThreadsV2RewardManager
-        reward_manager_cls = NaiveMultiThreadsV2RewardManager
-    elif reward_manager_name == 'prime':
-        from verl.workers.reward_manager import PrimeRewardManager
-        reward_manager_cls = PrimeRewardManager
     elif reward_manager_name == 'verifier_reward_manager':
         from verl.workers.reward_manager import VerifierRewardManager
         reward_manager_cls = VerifierRewardManager
-    elif reward_manager_name.startswith('custom'):
-        from verl.workers.reward_manager import CustomRewardManager
-        reward_manager_cls = CustomRewardManager
-        compute_score = reward_manager_name.split('@')[-1]
     else:
         raise NotImplementedError
 
@@ -137,7 +128,7 @@ def main_task(config, compute_score=None):
         "use_tool_reward_weight": config.data.get("use_tool_reward_weight", 0.0),
         "tool_call_penalty": config.data.get("tool_call_penalty", 0.1),
         "extract_answer_tags": config.data.get("extract_answer_tags", "split"),
-        "general_qa_reward_fn": config.data.get("general_qa_reward_fn", "v1"),
+        "general_qa_reward_fn": config.data.get("general_qa_reward_fn", "general_qa_gpt"),
         "val_general_qa_reward_fn": config.data.get("val_general_qa_reward_fn", None),
         "gpt_extract_answer": config.data.get("gpt_extract_answer", False),
         "model_system_prompt": system_prompt,
@@ -145,7 +136,7 @@ def main_task(config, compute_score=None):
         "strict_tool_call_penalty": config.data.get("strict_tool_call_penalty", False),
     }
     reward_fn = reward_manager_cls(tokenizer=tokenizer, num_examine=0, compute_score=compute_score, mode="train", extra_info=extra_info, gpt_threads=config.data.get("gpt_threads", 100))
-    if config.data.get("val_general_qa_reward_fn", None) == "v5":
+    if config.data.get("val_general_qa_reward_fn", None) == "general_qa_gpt":
         from verl.workers.reward_manager import NaiveMultiThreadsRewardManager
         val_reward_manager_cls = NaiveMultiThreadsRewardManager
         val_reward_fn = val_reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, mode="val", extra_info=extra_info)

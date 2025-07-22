@@ -66,7 +66,6 @@ class GPT4VisionClient:
 
         messages[-1]["content"].append({"type": "text", "text": prompt})
 
-        # import pdb; pdb.set_trace()
 
         attempt = 0
         while attempt < max_retries:

@@ -12,7 +12,7 @@ python3 -m verl.trainer.main_ppo \
     data.acc_reward_weight=1.0 \
     data.format_reward_weight=0.5 \
     data.general_qa_reward_fn="general_qa_verifier" \
-    data.val_general_qa_reward_fn="v5" \
+    data.val_general_qa_reward_fn="general_qa_gpt" \
     data.gpt_extract_answer=True \
     data.extract_answer_tags="split" \
     data.return_raw_chat=True \
