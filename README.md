@@ -23,6 +23,7 @@
       
 ## News
 
+- [x] [2025.07.22] Please check [this note](NOTE.md) to quickly locate the code we modified from the original Verl. We will continue working to make the code more user-friendly.
 - [x] [2025.07.18] We release [Paper](https://arxiv.org/abs/2507.13348) and this GitHub repo.
 - [x] [2025.07.17] All data and models can be found [here](https://huggingface.co/collections/Senqiao/visionthink-6878d839fae02a079c9c7bfe).
 
