@@ -139,13 +139,13 @@ def main_task(config, compute_score=None):
     if config.data.get("val_general_qa_reward_fn", None) == "general_qa_gpt":
         from verl.workers.reward_manager import NaiveMultiThreadsRewardManager
         val_reward_manager_cls = NaiveMultiThreadsRewardManager
-        val_reward_fn = val_reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, mode="val", extra_info=extra_info)
+        val_reward_fn = val_reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, mode="val", extra_info=extra_info, gpt_threads=config.data.get("gpt_threads", 100))
     elif config.data.get("val_general_qa_reward_fn", None) == "general_qa_tool":
         from verl.workers.reward_manager import NaiveMultiThreadsToolRewardManager
         val_reward_manager_cls = NaiveMultiThreadsToolRewardManager
-        val_reward_fn = val_reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, mode="val", extra_info=extra_info)
+        val_reward_fn = val_reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, mode="val", extra_info=extra_info, gpt_threads=config.data.get("gpt_threads", 100))
     else:
-        val_reward_fn = reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, mode="val", extra_info=extra_info)
+        val_reward_fn = reward_manager_cls(tokenizer=tokenizer, num_examine=1, compute_score=compute_score, mode="val", extra_info=extra_info, gpt_threads=config.data.get("gpt_threads", 100))
 
     resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
 

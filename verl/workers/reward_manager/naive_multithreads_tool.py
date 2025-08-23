@@ -133,13 +133,18 @@ class NaiveMultiThreadsToolRewardManager:
 
         n_threads = self.gpt_threads
 
-        print("gpt_threads: ", n_threads)
-
-        executor = ThreadPoolExecutor(n_threads)
-        futures = []
-        for i in range(len(data)):
-            futures.append(executor.submit(self.process_single, (i, data[i])))
-        results = [f.result() for f in as_completed(futures)]
+        if n_threads == 0:
+            print(f"gpt_threads={n_threads}. Perform Rule-based Reward Process.")
+            results = []
+            for i in range(len(data)):
+                results.append(self.process_single((i, data[i])))
+        else:
+            print("gpt_threads: ", n_threads)
+            executor = ThreadPoolExecutor(n_threads)
+            futures = []
+            for i in range(len(data)):
+                futures.append(executor.submit(self.process_single, (i, data[i])))
+            results = [f.result() for f in as_completed(futures)]
 
         results = sorted(results, key=lambda x: x[0])
         results = [result[1:] for result in results]

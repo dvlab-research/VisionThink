@@ -16,6 +16,5 @@ from .naive import NaiveRewardManager
 from .naive_multithreads import NaiveMultiThreadsRewardManager
 from .naive_multithreads_tool import NaiveMultiThreadsToolRewardManager
 from .verifier_reward_manager import VerifierRewardManager
-from .naive_multithreads_v2 import NaiveMultiThreadsV2RewardManager
 from .prime import PrimeRewardManager
 from .custom import CustomRewardManager

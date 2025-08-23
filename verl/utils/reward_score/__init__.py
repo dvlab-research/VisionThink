@@ -22,13 +22,16 @@ def _default_compute_score(data_source, solution_str, ground_truth, extra_info=N
     ]:
         from verl.utils.reward_score import prime_math
         res = prime_math.compute_score(solution_str, ground_truth)
-    elif data_source in ["open_source_no_require_high", "open_source_require_high", "open_source"]:
+    elif data_source in ["open_source_no_require_high", "open_source_require_high", "open_source", "open_source_rulebase"]:
         if extra_info[reward_fn_key] == 'general_qa_gpt':
             from verl.utils.reward_score import general_qa_gpt
             res = general_qa_gpt.compute_score(kwargs['prompt'], solution_str, ground_truth, extra_info)
         elif extra_info[reward_fn_key] == 'general_qa_tool':
             from verl.utils.reward_score import general_qa_tool
             res = general_qa_tool.compute_score(kwargs['prompt'], solution_str, ground_truth, extra_info)
+        elif extra_info['general_qa_reward_fn'] == 'rule_based_tool':
+            from . import rule_based_tool
+            res = rule_based_tool.compute_score(kwargs['prompt'], solution_str, ground_truth, extra_info)
         elif extra_info[reward_fn_key] == 'general_qa_verifier':
             from verl.utils.reward_score import general_qa_verifier
             res = general_qa_verifier.compute_score(kwargs['accuracy_score'], solution_str, ground_truth, extra_info)
