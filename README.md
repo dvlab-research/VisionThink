@@ -23,6 +23,8 @@
       
 ## News
 
+- [x] **[2025.08.26]** Added GPT-based evaluation [script](scripts/llm-as-judge.py) and provided modified [`lmms-eval` examples](scripts/eval_examples) to support output parsing, please check [here](##Evaluation).
+
 - [x] [2025.07.22] Please check [this note](NOTE.md) to quickly locate the code we modified from the original Verl. We will continue working to make the code more user-friendly.
 - [x] [2025.07.18] We release [Paper](https://arxiv.org/abs/2507.13348) and this GitHub repo.
 - [x] [2025.07.17] All data and models can be found [here](https://huggingface.co/collections/Senqiao/visionthink-6878d839fae02a079c9c7bfe).
@@ -147,6 +149,30 @@ CUDA_VISIBLE_DEVICES="0,1,2,3" python3 -m lmms_eval \
     --log_samples_suffix vllm \
     --output_path ./lmms_eval_logs/${MODEL_NAME} \
     --verbosity DEBUG
+```
+
+### Edit Lmms-Eval code
+
+We provide two examples under [`scripts/eval_examples`](scripts/eval_examples) to help align model outputs with lmms-eval's expectations. A common post-processing tweak is:
+
+```python
+pred = pred.split("</answer>")[0].split("<answer>")[-1].strip()
+```
+
+This extracts the response between `<answer>` tags.
+
+---
+
+### GPT-Based Evaluation
+
+You may evaluate predictions using the GPT. Example command:
+
+```bash
+python scripts/llm-as-judge.py \
+  --pred_path <JSONL_from_lmms_eval_logs> \
+  --output_dir <save_dir> \
+  --output_json <output.json> \
+  --num_tasks 50
 ```
 
 ## Citation
